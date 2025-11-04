@@ -96,6 +96,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "/renamegroup <A> <B> — переименовать группу A в B\n"
             "/export_contacts json — выгрузить контакты\n"
             "/import_contacts json — загрузить контакты\n"
+            "/set_permission <002> <**> — выдать права пользователю\n"
             "/clearall — удалить ВСЁ\n"
             "/list — показать всё"
         )
@@ -112,6 +113,24 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "A <пароль> Всем из A\n"
             "VSEM <пароль> Общее сообщение"
         )
+
+# Выдать права пользователю
+async def set_permission(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_ID:
+        return
+    if len(context.args) != 2:
+        await update.message.reply_text("Использование: /set_permission 002 **")
+        return
+    cid, stars = context.args
+    if not is_valid_contact_id(cid):
+        await update.message.reply_text("Неверный ID контакта.")
+        return
+    if not re.fullmatch(r"\*{1,3}", stars):
+        await update.message.reply_text("Права: *, ** или ***")
+        return
+    keys[cid] = stars
+    save_keys(keys)
+    await update.message.reply_text(f"✅ Права для {cid}: {stars}")
 
 # Добавить контакт
 async def add_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -275,7 +294,6 @@ async def import_contacts(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     fmt = context.args[0].lower()
     if fmt == "json":
-        # Обновим из файла
         global contacts, groups
         contacts, groups = load_data()
         await update.message.reply_text("✅ Контакты обновлены из JSON.")
@@ -420,6 +438,7 @@ def main():
     app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("set_permission", set_permission))
     app.add_handler(CommandHandler("add", add_contact))
     app.add_handler(CommandHandler("assign", assign_contact))
     app.add_handler(CommandHandler("unassign", unassign_contact))
@@ -437,4 +456,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
