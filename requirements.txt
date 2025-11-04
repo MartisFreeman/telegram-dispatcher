@@ -1,1 +1,2 @@
-python-telegram-bot==22.5
+echo "cryptography==43.0.1" > requirements.txt
+echo "python-telegram-bot==22.5" >> requirements.txt
